@@ -20,5 +20,4 @@
             android:name=".GuessImgActivity">
         </activity>
     </application>
-
 </manifest>
