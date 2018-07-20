@@ -44,8 +44,8 @@ public class MainActivity extends AppCompatActivity {
     private static final String THE_PREFERENCE = "calcDb";
     private SharedPreferences sharedPreferences;
     private static String webpageData;
-
-    private Jsoup theSoup;
+	private static ArrayList<String> imageRefs = new ArrayList<>();
+	private static ArrayList<String> titleRefs = new ArrayList<>();
 	DownloadTask myDownload;
 
 	@Override
@@ -104,21 +104,16 @@ public class MainActivity extends AppCompatActivity {
         return webpageData;
     }
 
+    //Goes to the GuessImgActivity
 	public void startGameClick(View v) {
 		Intent i = new Intent(getApplicationContext(), GuessImgActivity.class);
+		Bundle b = new Bundle();
+		b.putStringArrayList("imgs", imageRefs);
+		b.putStringArrayList("titles", titleRefs);
+		i.putExtras(b);
 		startActivity(i);
 	}
 
-
-	public Jsoup getTheSoup() {
-		return theSoup;
-	}
-
-	public void setTheSoup(Jsoup theSoup) {
-		if (theSoup != null) {
-			theSoup = theSoup;
-		}
-	}
 
 	private String downloadUrl(URL url) throws IOException {
 		InputStream stream = null;
@@ -172,8 +167,7 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void parsingResults(String results){
-		ArrayList<String> imageRefs = new ArrayList<>();
-		ArrayList<String> titleRefs = new ArrayList<>();
+
 		int i = 0;
 
 		Document doc =  Jsoup.parse(results);
