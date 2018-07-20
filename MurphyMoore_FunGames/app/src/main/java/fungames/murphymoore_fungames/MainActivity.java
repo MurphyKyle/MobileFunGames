@@ -1,23 +1,32 @@
 package fungames.murphymoore_fungames;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.TrustManager;
 
 
 // Load the web content and images from:
@@ -32,7 +41,11 @@ import javax.net.ssl.HttpsURLConnection;
 
 public class MainActivity extends AppCompatActivity {
 
-	private Jsoup theSoup;
+    private static final String THE_PREFERENCE = "calcDb";
+    private SharedPreferences sharedPreferences;
+    private static String webpageData;
+
+    private Jsoup theSoup;
 	DownloadTask myDownload;
 
 	@Override
@@ -40,18 +53,56 @@ public class MainActivity extends AppCompatActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		URL url = null;
-		try {
-			url = new URL("https://www.pcauthority.com.au/news/top-10-computer-games-of-all-time-170181");
-			myDownload = new DownloadTask();
-			myDownload.execute(url);
+        sharedPreferences = getSharedPreferences(THE_PREFERENCE, MODE_PRIVATE);
 
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
+        if (!checkMem()) {
+            try {
+                url = new URL("https://www.pcauthority.com.au/news/top-10-computer-games-of-all-time-170181");
+                myDownload = new DownloadTask();
+                myDownload.execute(url);
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            parsingResults(getWebpageData());
+        }
 	}
+
+
+    public boolean checkMem() {
+        if (sharedPreferences.contains("webpage")) {
+            String info = sharedPreferences.getString("webpage", null);
+
+            if (info != null) {
+                setWebpageData(info);
+                return true;
+            }
+
+            return false;
+        }
+        return false;
+    }
+
+    public boolean saveWebpageData(String pageData) {
+        try {
+            SharedPreferences.Editor ed = sharedPreferences.edit();
+            ed.putString("webpage", pageData);
+            ed.apply();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public void setWebpageData(String text) {
+        webpageData = text;
+    }
+
+    public String getWebpageData() {
+        return webpageData;
+    }
 
 	public void startGameClick(View v) {
 		Intent i = new Intent(getApplicationContext(), GuessImgActivity.class);
@@ -88,7 +139,7 @@ public class MainActivity extends AppCompatActivity {
 		 	stream = connection.getInputStream();
 			if (stream != null) {
 				// Converts Stream to String with max length of 500.
-				result = readStream(stream, 500);
+				result = readStream(stream, 120000);
 			}
 		}catch (Exception e) {
 			System.out.println(e.toString());
@@ -108,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
 		Reader reader = null;
 		reader = new InputStreamReader(stream, "UTF-8");
 		char[] rawBuffer = new char[maxReadSize];
-		int readSize;
+		int readSize = maxReadSize;
 		StringBuffer buffer = new StringBuffer();
 		while (((readSize = reader.read(rawBuffer)) != -1) && maxReadSize > 0) {
 			if (readSize > maxReadSize) {
@@ -120,6 +171,38 @@ public class MainActivity extends AppCompatActivity {
 			return buffer.toString();
 	}
 
+	private void parsingResults(String results){
+		ArrayList<String> imageRefs = new ArrayList<>();
+		ArrayList<String> titleRefs = new ArrayList<>();
+		int i = 0;
+
+		Document doc =  Jsoup.parse(results);
+        Element element =  doc.getElementById("article-primary");
+        Element thePTag = (element.getElementsByTag("p")).get(0);
+        Elements titleHtmls = thePTag.getElementsByTag("b");
+        Elements imgs = thePTag.getElementsByTag("a");
+
+        for(Element e : titleHtmls){
+        	if(i >=2){
+        		String[] splitTitile = e.text().split(" ");
+        		String title = "";
+        		for(int j = 1; j < splitTitile.length; j++){
+					title += splitTitile[j] + " ";
+				}
+				titleRefs.add(title.trim());
+
+			}
+			i++;
+		}
+		i = 0;
+        for(Element e : imgs){
+        	if(i >=6 && e.hasAttr("title")){
+        		imageRefs.add(e.attr("href"));
+			}
+			i++;
+		}
+
+    }
 
 	private class DownloadTask extends AsyncTask<URL, Void, String> {
 
@@ -136,7 +219,8 @@ public class MainActivity extends AppCompatActivity {
 
 		@Override
 		protected void onPostExecute(String results){
-
+//            saveWebpageData(results);
+            parsingResults(results);
 		}
 
 	}
