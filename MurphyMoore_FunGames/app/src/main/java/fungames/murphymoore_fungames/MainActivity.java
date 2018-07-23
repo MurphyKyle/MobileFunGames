@@ -54,7 +54,6 @@ public class MainActivity extends AppCompatActivity {
 		sharedPreferences = getSharedPreferences(THE_PREFERENCE, MODE_PRIVATE);
 		
 		if (!hasPageDataAlready()) {
-			if (!hasImageDataAlready()) {
 				try {
 					url = new URL("https://www.pcauthority.com.au/news/top-10-computer-games-of-all-time-170181");
 					myDownload = new DownloadTask();
@@ -64,18 +63,15 @@ public class MainActivity extends AppCompatActivity {
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
-			} else {
-			
-			}
 		} else {
 			parsingResults(getWebpageData());
 		}
 	}
-	
-	
+
+
 	private boolean hasImageDataAlready() {
 		// check sharedpreferences for all images
-		
+
 		return true;
 	}
 	
