@@ -2,4 +2,7 @@
     <string name="app_name">MurphyMoore_FunGames</string>
     <string name="fun_guessing_game">Fun Guessing Game!</string>
     <string name="start_game">START!</string>
+    <string name="img_description">The image to guess</string>
+
+
 </resources>
