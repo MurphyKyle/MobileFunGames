@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.acl.Group;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -63,16 +64,15 @@ public class GuessImgActivity extends AppCompatActivity {
     }
 
     private void playNext() {
-
         GameEntry e = null;
         if (entryIterator.hasNext()) {
             e = (GameEntry) entryIterator.next();
-
             setNextGame(e);
         } else {
             currentGameState = GameState.END_OF_GAME;
+            Toast.makeText(this, "Congratulations!!", Toast.LENGTH_LONG).show();
+            finish();
         }
-
     }
 
     private void setNextGame(GameEntry entry) {
@@ -84,8 +84,6 @@ public class GuessImgActivity extends AppCompatActivity {
         ((TextView) findViewById(R.id.Lbl_QNum)).setText(quizText);
 
         // set image to screen
-//        ((ImageView) findViewById(R.id.Img_GameImg))
-//                .setImageBitmap(IMAGE_LOADER.loadImageSync(entry.getImgUrl()));
         myDownload = new MyDownloadTask();
         myDownload.execute(entry.getImgUrl());
 
@@ -99,7 +97,6 @@ public class GuessImgActivity extends AppCompatActivity {
     public Bitmap loadImageFromURL(String fileUrl) {
         Bitmap bitmap = null;
         try {
-
             URL myFileUrl = new URL(fileUrl);
             HttpURLConnection conn =
                     (HttpURLConnection) myFileUrl.openConnection();
@@ -125,8 +122,9 @@ public class GuessImgActivity extends AppCompatActivity {
         if (currentGameState != GameState.END_OF_GAME) {
             RadioGroup group = findViewById(R.id.RGrp_AnsOptions);
             int id = group.getCheckedRadioButtonId();
-            if (!isChecked) {
-                Toast.makeText(this, "You messed up, try again!", Toast.LENGTH_SHORT);
+            if (group.getCheckedRadioButtonId() == -1) {
+                //int val = group.getCheckedRadioButtonId();
+                Toast.makeText(this, "You messed up, try again!", Toast.LENGTH_SHORT).show();
                 group.setBackgroundColor(Color.YELLOW);
                 return;
             }
@@ -134,7 +132,8 @@ public class GuessImgActivity extends AppCompatActivity {
             RadioButton selectedBtn = findViewById(selectedId);
             Button submitBtn = findViewById(R.id.Btn_Submit);
             TextView guessResultView = findViewById(R.id.Lbl_GuessResult);
-            group.setBackgroundColor(Color.WHITE);
+            group.setBackgroundColor(getResources().getColor(R.color.colorBackground));
+            
             switch (currentGameState) {
                 case START:
                 case GUESSING:
@@ -143,7 +142,12 @@ public class GuessImgActivity extends AppCompatActivity {
                     if (selectedBtn.getText().equals(currentGame.getCorrectAnswer())) {
                         // they guessed correctly, notify and change button text
                         guessResultView.setText(R.string.good_guess);
-                        submitBtn.setText(R.string.btn_next_img);
+                        if (quizNumber == 10) {
+                            submitBtn.setText(R.string.btn_finish);
+                        } else {
+                            submitBtn.setText(R.string.btn_next_img);
+                        }
+                        submitBtn.setBackgroundColor(getResources().getColor(R.color.colorCorrect));
                         currentGameState = GameState.CORRECT;
                     } else {
                         // they guessed INcorrectly
@@ -158,30 +162,27 @@ public class GuessImgActivity extends AppCompatActivity {
                 case CORRECT:
                     // moving to new image
                     guessResultView.setText(""); // that clear the box?
+                    submitBtn.setBackgroundColor(getResources().getColor(R.color.colorDefaultButton));
 
                     // reset any dead buttons
+                    group.clearCheck();
                     for (int i = 0; i < group.getChildCount(); i++) {
                         RadioButton rb = (RadioButton) group.getChildAt(i);
-                        if (rb.isChecked()) {
-                            rb.setChecked(false);
-                        }
                         if (!rb.isEnabled()) {
                             rb.setEnabled(true);
                         }
                     }
-                    isChecked = !isChecked;
 
                     // reset button text to default
                     submitBtn.setText(R.string.btn_submit);
-
                     playNext();
                     break;
             }
+            group.refreshDrawableState();
         } else {
-            Toast.makeText(this, "Congratulations!!", Toast.LENGTH_LONG);
+            Toast.makeText(this, "Congratulations!!", Toast.LENGTH_LONG).show();
             finish();
         }
-
     }
 
 

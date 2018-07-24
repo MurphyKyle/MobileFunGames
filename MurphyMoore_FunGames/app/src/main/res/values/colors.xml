@@ -5,5 +5,7 @@
     <color name="colorAccent">#FF4081</color>
     <color name="colorIncorrect">#BB2222</color>
     <color name="colorCorrect">#22BB22</color>
-    <color name="colorDefaultButton">#CCCCCC</color>
+    <color name="colorDefaultButton">#888888</color>
+    <color name="colorBackground">#EEEEEE</color>
+    <color name="colorBlack">#000000</color>
 </resources>
